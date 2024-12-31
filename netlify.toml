@@ -3,10 +3,11 @@
   publish = "build"
 
 [[redirects]]
-  from = "/.netlify/functions/*"
+  from = "/functions/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
+
 
 [functions]
   send_email = { name = "send-email", schedule = "0 0 * * *" }
