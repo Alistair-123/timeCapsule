@@ -2,10 +2,18 @@ const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
 const { getFirestore, collection, query, where, getDocs } = require('firebase-admin/firestore');
 
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+  });
+}
 
-admin.initializeApp();
 const db = getFirestore();
-
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -17,15 +25,13 @@ const transporter = nodemailer.createTransport({
 
 exports.handler = async (event, context) => {
   try {
-    
     const today = new Date().toISOString().split('T')[0]; 
 
-    
     const q = query(
-        collection(db, 'messages'),
-        where('date', '==', today),
-        where('sent', '==', false) 
-      );
+      collection(db, 'messages'),
+      where('date', '==', today),
+      where('sent', '==', false) 
+    );
       
     const snapshot = await getDocs(q);
 
@@ -37,7 +43,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    
     snapshot.forEach((doc) => {
       const { name, message, email } = doc.data();
 
@@ -48,7 +53,6 @@ exports.handler = async (event, context) => {
         html: `<p>Hello ${name},</p><p>Here is your message:</p><p>${message}</p><p>Best regards,<br/>Time Capsule App</p>`,
       };
 
-      
       transporter.sendMail(mailOptions, async (error, info) => {
         if (error) {
           console.error('Error sending email:', error);
