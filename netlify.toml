@@ -1,0 +1,13 @@
+[build]
+  functions = "functions"
+  publish = "build"
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+[[functions]]
+  name = "send-email"
+  schedule = "0 0 * * *"
