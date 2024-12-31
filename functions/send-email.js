@@ -25,14 +25,14 @@ const transporter = nodemailer.createTransport({
 
 exports.handler = async (event, context) => {
   try {
-    const today = new Date().toISOString().split('T')[0]; 
+    const today = new Date().toISOString().split('T')[0]; // Get today's date (yyyy-mm-dd)
 
     const q = query(
       collection(db, 'messages'),
       where('date', '==', today),
-      where('sent', '==', false) 
+      where('sent', '==', false) // Only unsent messages
     );
-      
+
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
@@ -43,26 +43,32 @@ exports.handler = async (event, context) => {
       };
     }
 
-    snapshot.forEach((doc) => {
+    const emailPromises = snapshot.docs.map(async (doc) => {
       const { name, message, email } = doc.data();
 
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: email,
         subject: `Time Capsule Message from the past to ${name}`,
-        html: `<p>Hello ${name},</p><p>Here is your message:</p><p>${message}</p><p>Best regards,<br/>Time Capsule App</p>`,
+        html: `<p>Hello ${name},<br/></p><p>Here is your message:</p>
+        <p>${message}</p><br/>
+        <p>Best regards,<br/>Time Capsule App</p>`,
       };
 
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          console.error('Error sending email:', error);
-        } else {
-          console.log('Email sent:', info.response);
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.response);
 
-          await doc.ref.update({ sent: true });
-        }
-      });
+        // Only update Firestore if email is sent successfully
+        await doc.ref.update({ sent: true });
+      } catch (error) {
+        console.error('Error sending email:', error);
+        throw error; // Re-throw the error to be handled by the catch block
+      }
     });
+
+    // Wait for all emails to be sent
+    await Promise.all(emailPromises);
 
     return {
       statusCode: 200,

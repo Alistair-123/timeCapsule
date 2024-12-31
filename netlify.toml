@@ -8,6 +8,5 @@
   status = 200
   force = true
 
-
 [functions]
-  send_email = { name = "send-email", schedule = "0 0 * * *" }
+  send_email = { name = "send-email", schedule = "* * * * *" }
