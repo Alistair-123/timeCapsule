@@ -9,4 +9,4 @@
   force = true
 
 [functions]
-  send_email = { name = "send-email", schedule = "* * * * *" }
+  send_email = { name = "send-email", schedule = "0 0 * * *" }
